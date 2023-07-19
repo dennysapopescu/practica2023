@@ -10,6 +10,11 @@ import javax.persistence.ManyToOne;
 @Entity
 public class Price implements Serializable {
 
+	@Override
+	public String toString() {
+		return "Price [value=" + value + ", store=" + store + ", article=" + article + "]";
+	}
+
 	private int value;
 
 	@Id

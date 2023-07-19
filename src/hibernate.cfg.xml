@@ -17,6 +17,7 @@
         <mapping class="com.ssn.practica.personal.hibernate.Trainee"/>
         <mapping class="com.ssn.practica.personal.hibernate.Course"/>
         <mapping class="com.ssn.practica.personal.hibernate.Evaluation"/>
+        
         <mapping class="com.ssn.practica.personal.miniapp.Article"/>
         <mapping class="com.ssn.practica.personal.miniapp.Store"/>
         <mapping class="com.ssn.practica.personal.miniapp.Price"/>

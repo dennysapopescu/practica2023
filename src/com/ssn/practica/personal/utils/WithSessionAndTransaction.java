@@ -7,11 +7,12 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
-public abstract class WithSessionAndTransaction {
+public abstract class WithSessionAndTransaction<T> {
 
 	private static SessionFactory sessionFactory;
+	private T returnValue;
 
-	public void run() {
+	public T run() {
 		try {
 			if (sessionFactory == null) {
 				setUp();
@@ -26,9 +27,12 @@ public abstract class WithSessionAndTransaction {
 			session.close();
 		} catch (HibernateException e) {
 			e.printStackTrace();
+		} catch (RuntimeException e) {
+			System.out.println(e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return getReturnValue();
 	}
 
 	public abstract void doAction(Session session);
@@ -41,5 +45,13 @@ public abstract class WithSessionAndTransaction {
 			StandardServiceRegistryBuilder.destroy(registry);
 			e.printStackTrace();
 		}
+	}
+
+	public T getReturnValue() {
+		return returnValue;
+	}
+
+	public void setReturnValue(T returnValue) {
+		this.returnValue = returnValue;
 	}
 }

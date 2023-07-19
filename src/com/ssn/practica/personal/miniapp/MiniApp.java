@@ -3,16 +3,11 @@ package com.ssn.practica.personal.miniapp;
 import java.util.List;
 import java.util.Scanner;
 
-import javax.persistence.TypedQuery;
-
-import org.hibernate.Session;
-import org.hibernate.query.Query;
-
-import com.ssn.practica.personal.utils.WithSessionAndTransaction;
-
 public class MiniApp {
 	
-	private static Scanner scan = new Scanner(System.in);
+	private Scanner scan = new Scanner(System.in);
+	private DatabaseOperations dbOps = new DatabaseOperations();
+	private KeyboardUtils kb = new KeyboardUtils();
 	
 	public static void main(String[] args) throws Exception {
 		MiniApp demo = new MiniApp();
@@ -20,6 +15,7 @@ public class MiniApp {
 	}
 
 	private void run() throws Exception {
+		
 		while(true)
 		{
 			showMenu();
@@ -41,10 +37,34 @@ public class MiniApp {
 				break;
 				
 			case 4: //show stats
-				showStats();
+				dbOps.showStats();
 				break;
 				
-			case 5: //close
+			case 5: //delete article
+				deleteArticle();
+				break;
+				
+			case 6: //delete stoer
+				deleteStore();
+				break;
+				
+			case 7: //delete price
+				deletePrice();
+				break;
+				
+			case 8: //sort articles
+				sortArticles();
+				break;
+				
+			case 9: //sort stores
+				sortStores();
+				break;
+				
+			case 10: //sort prices
+				sortPrices();
+				break;
+				
+			case 11: //close
 				System.out.println("The app is closing!");
 				return;
 				
@@ -66,167 +86,73 @@ public class MiniApp {
 		System.out.println("2. Add store");
 		System.out.println("3. Add price");
 		System.out.println("4. Show statistics");
-		System.out.println("5. Close app");
+		System.out.println("5. Delete article");
+		System.out.println("6. Delete store");
+		System.out.println("7. Delete price");
+		System.out.println("8. Sort articles");
+		System.out.println("9. Sort stores");
+		System.out.println("10. Sort prices");
+		System.out.println("11. Close app");
 		System.out.println("Choose an option: ");
 	}
 	
 	
-	
-	
-	
-	
-	
-	private static void addArticle() {
-		new WithSessionAndTransaction() {
-			@Override
-			public void doAction(Session session) {
-				
-				System.out.println("type article's name: ");
-				String articleName = scan.nextLine();
-
-				Article article = new Article(articleName);
-				session.persist(article);
-				
-				System.out.println("Article " + articleName + " added.");
-
-			}
-		}.run();
+	private void addArticle() {
+		String name = kb.getString("Article name: ");
+		dbOps.addArticle(name);
 	}
 	
-	
-	
-	
-	private static void addStore()
-	{
-		new WithSessionAndTransaction() {
-			@Override
-			public void doAction(Session session) {
-				
-				System.out.println("type store's name: ");
-				String storeName = scan.nextLine();
-
-				Store store = new Store(storeName);
-				session.persist(store);
-				
-				System.out.println("Store " + storeName + " added.");
-
-			}
-		}.run();
+	private void addStore() {
+		String name = kb.getString("Store name: ");
+		dbOps.addStore(name);
 	}
 	
-	
-	
-	private static void addPrice()
-	{
-		new WithSessionAndTransaction() {
-			@Override
-			public void doAction(Session session) {
-				
-				System.out.println("type article's name: ");
-				String articleName = scan.nextLine();
-				System.out.println("type store's name: ");
-				String storeName = scan.nextLine();
-				System.out.println("type the price: ");
-				int price = scan.nextInt();
-				scan.nextLine();
-				
-				TypedQuery<Article> articleQuery = session.createQuery("select a from Article a where a.name = :name", Article.class);
-				articleQuery.setParameter("name", articleName);
-				List<Article> articles = articleQuery.getResultList();
-
-				TypedQuery<Store> storeQuery = session.createQuery("select s from Store s where s.name = :name", Store.class);
-				storeQuery.setParameter("name", storeName);
-				List<Store> stores = storeQuery.getResultList();
-				
-				
-				if(articles.isEmpty() && stores.isEmpty())
-				{
-					System.out.println("The article or the store doesn't exist.");
-				}
-				else
-				{
-					Article article = articles.get(0);
-					Store store = stores.get(0);
-					
-					Price priceInstance = new Price(price, store, article);
-					session.persist(priceInstance);
-					
-					System.out.println("Price for the article " + articleName + " added.");
-				}
-				
-			}
-		}.run();
+	private void addPrice() {
+		String storeName = kb.getString("Store name: ");
+		String articleName = kb.getString("Article name: ");
+		int price = kb.getInt("Price: ");
+		dbOps.addPrice(storeName, articleName, price);
 	}
 	
-	
-	
-	private static void showStats()
-	{
-		new WithSessionAndTransaction() {
-			@Override
-			public void doAction(Session session) {
-
-				Query<Article> articleQuery = session.createQuery("select a from Article a", Article.class);
-				List<Article> articles = articleQuery.getResultList();
-
-				for(Article art : articles) {
-					Query<Integer> priceQuery = session.createQuery("select MIN(p.value) from Price p where p.article=:article", Integer.class);
-					priceQuery.setParameter("article", art);
-					Integer minPrice = priceQuery.uniqueResult();
-					
-					if(minPrice==null)
-					{
-						continue;
-					}
-					
-					Query<Store> storeQuery = session.createQuery("select p.store from Price p where p.article=:article and p.value=:price", Store.class);
-					storeQuery.setParameter("article", art);
-					storeQuery.setParameter("price", minPrice);
-					Store store = storeQuery.uniqueResult();
-				
-					System.out.println("Article: " + art.getName());
-					System.out.println("Store: " + store.getName());
-					System.out.println("Minimum price: " + minPrice);
-				}
-
-			}
-		}.run();
-		
-		
-		/*
-		new WithSessionAndTransaction() {
-		    @Override
-		    public void doAction(Session session) {
-		        Query<Article> query = session.createQuery("select a from Article a " +
-		                "join a.prices p " +
-		                "join p.store s " +
-		                "where p.value = (select MIN(p2.value) from Price p2 where p2.article = a) " +
-		                "order by a.name", Article.class);
-
-		        List<Article> articles = query.getResultList();
-
-		        for (Article art : articles) {
-		            Query<Price> priceQuery = session.createQuery("select p from Price p " +
-		                    "where p.article = :article and p.value = (select MIN(p2.value) from Price p2 where p2.article = :article)", Price.class);
-		            priceQuery.setParameter("article", art);
-		            Price minPrice = priceQuery.uniqueResult();
-
-		            if (minPrice == null) {
-		                continue;
-		            }
-
-		            Store store = minPrice.getStore();
-
-		            System.out.println("Article: " + art.getName());
-		            System.out.println("Store: " + store.getName());
-		            System.out.println("Minimum price: " + minPrice);
-		        }
-		    }
-		}.run();
-		*/
+	private void deleteArticle() {
+		String articleName = kb.getString("Article name: ");
+		dbOps.deleteArticle(articleName);
 	}
 	
+	private void deleteStore() {
+		String storeName = kb.getString("Store name: ");
+		dbOps.deleteStore(storeName);
+	}
+	
+	private void deletePrice() {
+		String articleName = kb.getString("Article name: ");
+		String storeName = kb.getString("Store name: ");
+		int price = kb.getInt("Price: ");
+		dbOps.deletePrice(articleName, storeName);
+	}
+	
+	private void sortArticles() {
+		List<Article> sortedArticles = dbOps.getSortedArticles();
+		System.out.println("Sorted articles: ");
+		for(Article article : sortedArticles) {
+			System.out.println(article.getName());
+		}
+	}
 
-
+	private void sortStores() {
+		List<Store> sortedStores = dbOps.getSortedStores();
+		System.out.println("Sorted stores: ");
+		for(Store store : sortedStores) {
+			System.out.println(store.getName());
+		}
+	}
+	
+	private void sortPrices() {
+		List<Price> sortedPrices = dbOps.getSortedPrices();
+		System.out.println("Sorted prices: ");
+		for(Price price : sortedPrices) {
+			System.out.println("Article: " + price.getArticle().getName() + " Store: " + price.getStore().getName() + " Price: " + price.getValue());
+		}
+	}
 
 }
