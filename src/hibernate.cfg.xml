@@ -21,7 +21,8 @@
         <mapping class="com.ssn.practica.personal.miniapp.Article"/>
         <mapping class="com.ssn.practica.personal.miniapp.Store"/>
         <mapping class="com.ssn.practica.personal.miniapp.Price"/>
-        <!--mapping class="com.ssn.practica.personal.miniapp.DatabaseOperations"/-->
+        
+        <mapping class="com.ssn.practica.personal.miniapp.StockItem"/>
 
         <!-- mapping resource="com/ssn/databaseobjects.xml"/-->
 
